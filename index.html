@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KFC Order Booking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+        }
+        h1 {
+            padding: 20px;
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .welcome-message {
+            font-size: 15px;
+            font-weight: bold;
+            color: black;
+            position: absolute;
+            top: 10px;
+            left: 100%;
+            animation: flow 20s linear infinite;
+        }
+        @keyframes flow {
+            0% {
+                left: 100%;
+            }
+            100% {
+                left: -100%;
+            }
+        }
+        .menu-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
+        }
+        .item-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-radius: 15px;
+            margin: 10px;
+            padding: 15px;
+            width: 22%;
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+        .item-card:hover, .item-card:active {
+            transform: scale(1.05);
+        }
+        .item-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        .item-card h3 {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .item-card p {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        .cart {
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        button {
+            padding: 6px 10px;
+            font-size: 14px;
+            border: none;
+            background-color: darkred;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: auto;
+            max-width: 150px;
+            touch-action: manipulation;
+            transition: background-color 0.3s ease;
+        }
+        button:active {
+            background-color: darkred;
+        }
+        #cartItems {
+            padding: 0;
+            list-style-type: none;
+        }
+        #cartItems li {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .remove-button {
+            background-color: darkred;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 3px 6px;
+            font-size: 10px;
+            margin-left: 10px;
+            width: auto;
+        }
+        .cart-total {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        #orderMessage {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+        }
+        .payment-method {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .payment-method button {
+            background-color: green;
+            color: white;
+            font-size: 14px;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .payment-method button:hover {
+            background-color: darkgreen;
+        }
+        #paymentSuccess {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-message">Welcome to KFC Order Booking System! Enjoy your meal experience with us</div>
+
+    <h1>🍗 KFC Order Booking System 🍟</h1>
+
+    <div class="menu-container" id="menuContainer"></div>
+
+    <div class="cart" id="cart">
+        <h2>Your Cart</h2>
+        <ul id="cartItems"></ul>
+        <div class="cart-total" id="cartTotal">Total: ₹0</div>
+        <button id="placeOrderButton">Place Order</button>
+        <div id="orderMessage"></div> <!-- This is where the order success message will appear -->
+    </div>
+
+    <div id="paymentContainer" style="display: none;">
+        <div class="payment-method">
+            <p>Please select a payment method to complete your order:</p>
+            <button id="creditCardPayment">Credit Card</button>
+            <button id="debitCardPayment">Debit Card</button>
+            <button id="paypalPayment">PayPal</button>
+        </div>
+    </div>
+
+    <div id="paymentSuccess" style="display: none;">
+        <p>Payment Successful! Your order will be processed.</p>
+    </div>
+
+    <script>
+        const menuItems = [
+            { id: 1, name: 'Zinger Burger', price: 150, image: 'zinger-burger.png' },
+            { id: 2, name: 'Chicken Popcorn', price: 120, image: 'chicken-popcorn.png' },
+            { id: 3, name: 'French Fries', price: 80, image: 'french-fries.png' },
+            { id: 4, name: 'Chicken Bucket', price: 350, image: 'chicken-bucket.png' },
+            { id: 5, name: 'Leg Piece Bucket', price: 200, image: 'leg-piece-bucket.png' },
+            { id: 6, name: 'Chicken Biryani', price: 220, image: 'chicken-biryani.png' },
+            { id: 7, name: 'Pepsi', price: 50, image: 'pepsi.png' },
+            { id: 8, name: 'Combo', price: 400, image: 'combo.png' }
+        ];
+
+        const cart = [];
+
+        function displayMenu() {
+            const menuContainer = document.getElementById('menuContainer');
+            menuItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}">
+                    <h3>${item.name}</h3>
+                    <p>₹${item.price}</p>
+                    <button class="add-to-cart-button" data-id="${item.id}">Add to Cart</button>
+                `;
+                menuContainer.appendChild(card);
+            });
+
+            // Add event listeners for "Add to Cart" buttons (both touch and click events)
+            const addToCartButtons = document.querySelectorAll('.add-to-cart-button');
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', handleAddToCart);
+                button.addEventListener('touchstart', handleAddToCart);
+            });
+        }
+
+        // Event handler for adding items to cart
+        function handleAddToCart(event) {
+            event.preventDefault();  // Prevents the default behavior (like double firing the events on mobile)
+
+            const itemId = event.target.getAttribute('data-id');
+            addToCart(Number(itemId));
+        }
+
+        // Function to add item to cart
+        function addToCart(itemId) {
+            const item = menuItems.find(item => item.id === itemId);
+            cart.push(item);
+            updateCart();
+        }
+
+        // Update the cart UI
+        function updateCart() {
+            const cartItems = document.getElementById('cartItems');
+            cartItems.innerHTML = '';
+            cart.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `${item.name} - ₹${item.price} 
+                    <button class="remove-button" data-index="${index}">Remove</button>`; 
+                cartItems.appendChild(li);
+            });
+
+            const totalAmount = cart.reduce((total, item) => total + item.price, 0);
+            document.getElementById('cartTotal').innerText = `Total: ₹${totalAmount}`;
+
+            // Add event listeners for "Remove" buttons
+            const removeButtons = document.querySelectorAll('.remove-button');
+            removeButtons.forEach(button => {
+                button.addEventListener('click', handleRemoveFromCart);
+                button.addEventListener('touchstart', handleRemoveFromCart); // Added touch event here
+            });
+        }
+
+        // Event handler for removing items from the cart
+        function handleRemoveFromCart(event) {
+            const itemIndex = event.target.getAttribute('data-index');
+            cart.splice(itemIndex, 1);  // Remove item from the cart
+            updateCart();
+        }
+
+        // Function to place the order
+        function placeOrder() {
+            if (cart.length === 0) {
+                document.getElementById('cartTotal').innerText = 'Your cart is empty!';
+                return;
+            }
+
+            let totalAmount = 0;
+            cart.forEach(item => totalAmount += item.price);
+
+            // Show the total order amount and success message
+            document.getElementById('cartTotal').innerText = `Your total order amount is ₹${totalAmount}.`;
+
+            // Display the success message below the "Place Order" button
+            const orderMessage = document.getElementById('orderMessage');
+            orderMessage.innerText = 'Order placed successfully!';
+
+            // Display the prompt asking for payment
+            const paymentPrompt = document.createElement('p');
+            paymentPrompt.innerText = 'Please select a payment method to complete your order.';
+            paymentPrompt.style.fontWeight = 'bold';
+            paymentPrompt.style.color = 'blue';
+            orderMessage.appendChild(paymentPrompt); // Adding the payment prompt
+
+            // Show the payment options
+            document.getElementById('paymentContainer').style.display = 'block';
+
+            // Clear the cart after placing the order
+            cart.length = 0;
+            updateCart();
+        }
+
+        // Add event listener for "Place Order" button
+        const placeOrderButton = document.getElementById('placeOrderButton');
+        placeOrderButton.addEventListener('click', placeOrder);
+        placeOrderButton.addEventListener('touchstart', placeOrder); // Added touch event here
+
+        // Function to handle payment selection
+        function handlePayment(paymentMethod) {
+            document.getElementById('paymentContainer').style.display = 'none';
+            const paymentSuccessMessage = document.getElementById('paymentSuccess');
+            paymentSuccessMessage.style.display = 'block';
+            paymentSuccessMessage.innerHTML = `${paymentMethod} Payment Successful! Your order is being processed.`;
+        }
+
+        // Add event listeners for payment methods
+        document.getElementById('creditCardPayment').addEventListener('click', () => handlePayment('Credit Card'));
+        document.getElementById('debitCardPayment').addEventListener('click', () => handlePayment('Debit Card'));
+        document.getElementById('paypalPayment').addEventListener('click', () => handlePayment('PayPal'));
+
+        // Initial call to display menu items
+        displayMenu();
+    </script>
+
+</body>
+</html>
